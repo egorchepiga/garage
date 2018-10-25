@@ -54,7 +54,7 @@ func (CarsCounted) twiceLastMonth(db *xorm.Engine) []CarsCounted {
 
 func (j CarsCounted) String() string {
 	return fmt.Sprintf("Cars Counted < \n"+
-		"\t Car: %d num: %s color: %s mark: %s foreign: %t \n"+
+		"\t Car: %d num: %s color: %s mark: %s foreign: %d \n"+
 		"\t count : %d> \n",
 		j.Cars.Id, j.Cars.Num, j.Cars.Color, j.Cars.Mark, j.Cars.IsForeign, j.Count)
 }
@@ -91,7 +91,7 @@ func (CarsCountedCost) getSum(db *xorm.Engine) []CarsCountedCost {
 
 func (j CarsCountedCost) String() string {
 	return fmt.Sprintf("Cars Counted < \n"+
-		"\t Car: %d num: %s color: %s mark: %s foreign: %t \n"+
+		"\t Car: %d num: %s color: %s mark: %s foreign: %d \n"+
 		"\t sum : %f> \n",
 		j.Cars.Id, j.Cars.Num, j.Cars.Color, j.Cars.Mark, j.Cars.IsForeign, j.Sum)
 }
@@ -162,4 +162,176 @@ func (TopMasters) get (db *xorm.Engine) []TopMasters {
 		Limit(5).
 		Find(&masters)
 	return masters
+}
+
+// 2.1.1
+/*
+	service := Services{Name: "go test", CostForeign:200, CostOur:100}
+	service.add(db)
+	fmt.Println(service)
+*/
+
+func (s *Services) add (db *xorm.Engine) *Services {
+	_, err := db.Insert(s)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return s
+}
+
+// 2.1.2
+/*
+	work := Works{Car:27}
+	work.add("go test", db)
+	fmt.Println(work)
+*/
+
+func (w *Works) add (db *xorm.Engine, serviceName string) *Works {
+	service := Services{Name: serviceName}
+	db.Get(&service)
+	w.Service = service.Id
+	db.Insert(w)
+	return w
+}
+
+// 2.2.1
+
+/*
+	car := Cars{ Num:"770", Color:"red", Mark:"Toyota", IsForeign:1}
+	service := Services{Name:"Go Service", CostOur:20.20, CostForeign:23.14}
+	work, err := transactionCarService(car, service, db)
+	fmt.Println(work, err)
+*/
+func transactionCarService(db *xorm.Engine, car Cars, service Services) (errWork Works, err error) {
+	session := db.NewSession()
+	errWork = Works{}
+	defer session.Close()
+
+	err = session.Begin()
+	if err != nil {
+		return
+	}
+
+	_, err = session.Insert(&car)
+	if err != nil {
+		session.Rollback()
+		return
+	}
+
+	_, err = session.Insert(&service)
+	if err != nil {
+		session.Rollback()
+		return
+	}
+
+	work := Works{Car:car.Id, Service:service.Id}
+	_, err = session.Insert(&work)
+	if err != nil {
+		session.Rollback()
+		return
+	}
+	session.Commit()
+	return work, err
+}
+
+// 2.2.2
+/*
+	master := Masters{Name:"Дэн"}
+	car := Cars{Num:"777"}
+	service := Services{Name:"косметика"}
+
+	db.Get(&master)
+	db.Get(&car)
+	db.Get(&service)
+	work := Works{ Master:master.Id, Car:car.Id, Service:service.Id}
+
+	res, err := master.addWork(db, work)
+	if err != nil {
+	panic(err)
+	}
+
+	fmt.Println(res)
+*/
+
+func (m *Masters) addWork (db *xorm.Engine, work Works) (errWork Works,err error) {
+	errWork = Works{}
+	has, err := db.
+		Where("date_work > CURRENT_TIMESTAMP - interval '1 day'").
+		And("master_id = ?", m.Id).
+		Exist(&work)
+	if err != nil {
+		return
+	}
+	if has {
+		err = fmt.Errorf("this master already has work for this day")
+		return
+	}
+	_, err = db.Insert(&work)
+	if err != nil {
+		return
+	}
+	return work, nil
+}
+
+//3.1.1
+
+func (c *Cars) delete (db *xorm.Engine) error {
+	_, err := db.Delete(c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//3.2.2
+
+func (m *Masters) deleteServices (db *xorm.Engine) error {
+	works := make([]Works,0)
+	db.
+		Sql("SELECT service_id, count(master_id) " +
+			"FROM " +
+			"	( SELECT master_id, service_id " +
+			"	  FROM works " +
+			"	  GROUP BY master_id, service_id" +
+			"	) AS tab1 " +
+			"GROUP BY service_id " +
+			"HAVING COUNT(*) = 1").
+		Find(&works)
+
+	in := make([]int64,0)
+	for _, v := range works {
+		in = append(in, v.Service)
+	}
+	works = make([]Works,0)
+	db.
+		In("service_id", in).
+		Where("master_id = ?", m.Id).
+		GroupBy("service_id").
+		Find(&works)
+
+	in = make([]int64,0)
+	for _, v := range works {
+		in = append(in, v.Service)
+	}
+
+	_, err := db.
+		In("service_id", in).
+		Delete(new(Works))
+	if err != nil {
+		return err
+	}
+
+	_, err = db.
+		In("id", in).
+		Delete(new(Services))
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Delete(m)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
