@@ -27,6 +27,17 @@ func autoMigrate(db *gorm.DB) {
 }
 
 
+type Work struct {
+	Id   		int			`gorm:"column:id; 			primary_key;	AUTO_INCREMENT"`
+	Date   		time.Time   `gorm:"column:date_work;"`
+	MasterId	int
+	Master		Master
+	CarId		int
+	Car			Car
+	ServiceId	int
+	Service		Service
+}
+
 type Car struct {
 	Id        int			`gorm:"column:id; 		primary_key; 	not null;	AUTO_INCREMENT"`
 	Num       string		`gorm:"column:num;' 	type:varchar(20)"`
@@ -38,14 +49,6 @@ type Car struct {
 type Master struct {
 	Id   int  				`gorm:"column:id; 		primary_key; 	not null;	AUTO_INCREMENT"`
 	Name string				`gorm:"column:name; 	type:varchar(50)"`
-}
-
-type Work struct {
-	Id   		int			`gorm:"column:id; 		primary_key;	AUTO_INCREMENT"`
-	Date   		time.Time   `gorm:"column:date_work;"`
-	Master		int			`gorm:"column:master_id; default:'0'"`
-	Car			int			`gorm:"column:car_id;"`
-	Service		int			`gorm:"column:service_id;"`
 }
 
 type Service struct {
@@ -61,7 +64,7 @@ func (s Service) String() string {
 }
 
 func (w Work) String() string {
-	return fmt.Sprintf("Work <%d %v %v %v %v>\n", w.Id, w.Date, w.Master, w.Car, w.Service)
+	return fmt.Sprintf("Work #%d \n\t date:\t\t %v \n\t master_id:\t %d \n\t car_id:\t %d \n\t service_id: %d \n\t%v \t%v \t%v\n", w.Id, w.Date, w.MasterId, w.CarId, w.ServiceId,  w.Master, w.Car, w.Service)
 }
 
 func (m Master) String() string {
@@ -71,4 +74,3 @@ func (m Master) String() string {
 func (c Car) String() string {
 	return fmt.Sprintf("Car <%d %s %s %s %d>\n", c.Id, c.Num, c.Color, c.Mark, c.IsForeign)
 }
-
