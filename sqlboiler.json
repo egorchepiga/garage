@@ -1,0 +1,10 @@
+{
+  "psql": {
+    "host": "localhost",
+    "port": "5432",
+    "user": "egor",
+    "pass": "Koki63112109",
+    "dbname" : "egor",
+    "blacklist" : ["masters_dohod3", "uslugi"]
+  }
+}

@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func connectDatabase() *xorm.Engine{
+func connectXORMDatabase() *xorm.Engine{
 	config := loadConfiguration("./config.json")
 	dbInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		config.Database.Host, config.Database.Port, config.Database.User, config.Database.Password, config.Database.Db)
@@ -53,28 +53,28 @@ func (JoinedWork) TableName() string{
 }
 
 type Cars struct {
-	Id        int32			`xorm:"'id' pk autoincr"`
+	Id        int64			`xorm:"'id' pk not null autoincr"`
 	Num       string		`xorm:"'num' varchar(20)"`
 	Color     string		`xorm:"'color' varchar(20)"`
 	Mark      string		`xorm:"'mark' varchar(20)"`
-	IsForeign bool			`xorm:"'is_foreign'"`
+	IsForeign int64			`xorm:"'is_foreign' smallint"`
 }
 
 type Masters struct {
-	Id   int32  			`xorm:"'id' pk autoincr"`
+	Id   int64  			`xorm:"'id' pk not null autoincr"`
 	Name string				`xorm:"'name' varchar(50)"`
 }
 
 type Works struct {
-	Id   		int32		`xorm:"'id' pk autoincr"`
+	Id   		int64		`xorm:"'id' pk autoincr"`
 	Date   		time.Time   `xorm:"'date_work'"`
-	Master		int32		`xorm:"'master_id'"`
-	Car			int32		`xorm:"'car_id'"`
-	Service		int32		`xorm:"'service_id'"`
+	Master		int64		`xorm:"'master_id' default 0"`
+	Car			int64		`xorm:"'car_id'"`
+	Service		int64		`xorm:"'service_id'"`
 }
 
 type Services struct {
-	Id 			int32		`xorm:"'id' pk autoincr"`
+	Id 			int64		`xorm:"'id' pk autoincr"`
 	Name 		string		`xorm:"'name'"`
 	CostOur		float64		`xorm:"'cost_our'"`
 	CostForeign	float64		`xorm:"'cost_foreign'"`
