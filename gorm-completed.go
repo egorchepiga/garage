@@ -14,10 +14,10 @@ func sumCarsServices(db *gorm.DB) (our, foreign float64) {
 	db.Set("gorm:auto_preload", true).
 		Find(&works)
 	for _, work := range works {
-		if work.Car.IsForeign == 1 {
-			foreign += work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			foreign += work.Service.Cost_Foreign
 		} else {
-			our += work.Service.CostOur
+			our += work.Service.Cost_Our
 		}
 	}
 	return
@@ -74,12 +74,12 @@ func everyCarLastYear(db *gorm.DB) (cars map[Car]float64) {
 
 	for _, work := range works {
 		var cost float64
-		if work.Car.IsForeign == 1 {
-			cost = work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			cost = work.Service.Cost_Foreign
 		} else {
-			cost = work.Service.CostOur
+			cost = work.Service.Cost_Our
 		}
-		work.Car.Id = work.MasterId
+		work.Car.Id = work.Master_Id
 		cars[work.Car] += cost
 	}
 
@@ -109,7 +109,7 @@ func topFiveMasters(db *gorm.DB) (masters []Master) {
 		topMasters[work.Master.Id] = TopMaster{work.Master, make(map[int]int,0)}
 	}
 	for _, work := range works {
-		topMasters[work.Master.Id].fixedCars[work.CarId] = 0
+		topMasters[work.Master.Id].fixedCars[work.Car_Id] = 0
 	}
 
 	arrTopMasters := make([]TopMaster,0)
@@ -193,12 +193,12 @@ func servicesAboveGORMPreload(n float64, db *gorm.DB) (services map[Service]floa
 
 	for _, work := range works {
 		var cost float64
-		if work.Car.IsForeign == 1 {
-			cost = work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			cost = work.Service.Cost_Foreign
 		} else {
-			cost = work.Service.CostOur
+			cost = work.Service.Cost_Our
 		}
-		work.Service.Id = work.ServiceId
+		work.Service.Id = work.Service_Id
 		if _, ok := services[work.Service]; ok {
 			services[work.Service] += cost
 		} else {
@@ -233,12 +233,12 @@ func mastersAboveGORMPreload(db *gorm.DB) (masters map[Master]float64) {
 
 	for _, work := range works {
 		var cost float64
-		if work.Car.IsForeign == 1 {
-			cost = work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			cost = work.Service.Cost_Foreign
 		} else {
-			cost = work.Service.CostOur
+			cost = work.Service.Cost_Our
 		}
-		work.Master.Id = work.MasterId
+		work.Master.Id = work.Master_Id
 		masters[work.Master] += cost
 	}
 
@@ -263,12 +263,12 @@ func averageServiceForCars(db *gorm.DB) (cars map[Car]float64) {
 
 	for _, work := range works {
 		var cost float64
-		if work.Car.IsForeign == 1 {
-			cost = work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			cost = work.Service.Cost_Foreign
 		} else {
-			cost = work.Service.CostOur
+			cost = work.Service.Cost_Our
 		}
-		work.Car.Id = work.MasterId
+		work.Car.Id = work.Master_Id
 		cars[work.Car] += cost
 	}
 
@@ -285,10 +285,10 @@ func averageServiceForCar(car Car, service Service, db *gorm.DB) (sum float64, c
 		Find(&works)
 
 	for _, work := range works {
-		if work.Car.IsForeign == 1 {
-			sum += work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			sum += work.Service.Cost_Foreign
 		} else {
-			sum += work.Service.CostOur
+			sum += work.Service.Cost_Our
 		}
 	}
 	count = len(works)
@@ -317,10 +317,10 @@ func masterRecords(master Master, db *gorm.DB) (sum float64, car Car) {
 
 	for _, work := range works {
 		var cost float64
-		if work.Car.IsForeign == 1 {
-			cost = work.Service.CostForeign
+		if work.Car.Is_Foreign == 1 {
+			cost = work.Service.Cost_Foreign
 		} else {
-			cost = work.Service.CostOur
+			cost = work.Service.Cost_Our
 		}
 		if cost > sum {
 			sum = cost
@@ -378,15 +378,15 @@ func (master *Master) BeforeUpdate(scope *gorm.Scope) (err error) {
 }
 
 //7.2.2
-func (service *Service) BeforeUpdate(scope *gorm.Scope) (err error) {
-	cost_our_new := service.CostOur
+/*func (service *Service) BeforeUpdate(scope *gorm.Scope) (err error) {
+	cost_our_new := service.Cost_Our
 	scope.DB().Find(service)
-	if cost_our_new != 0 && cost_our_new != service.CostOur {
-		cost_foreign_new := service.CostForeign + service.CostForeign * (cost_our_new - service.CostOur) / service.CostOur
+	if cost_our_new != 0 && cost_our_new != service.Cost_Our {
+		cost_foreign_new := service.Cost_Foreign + service.Cost_Foreign* (cost_our_new - service.Cost_Our) / service.Cost_Our
 		scope.DB().Model(service).Update("cost_foreign", cost_foreign_new)
 	}
 	return
-}
+}*/
 
 //7.2.3
 func (work *Work) BeforeUpdate(scope *gorm.Scope) (err error) {
@@ -442,7 +442,7 @@ func (work *Work) BeforeDelete(scope *gorm.Scope) (err error) {
 }
 
 //7.3.3
-func (service *Service) BeforeDelete(scope *gorm.Scope) (err error) {
+/*func (service *Service) BeforeDelete(scope *gorm.Scope) (err error) {
 	works := make([]Work,0)
 	worksId := make([]int,0)
 	scope.DB().
@@ -458,4 +458,4 @@ func (service *Service) BeforeDelete(scope *gorm.Scope) (err error) {
 	}
 	return
 }
-
+*/
