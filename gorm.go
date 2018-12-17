@@ -23,7 +23,7 @@ func connectGORMDatabase() *gorm.DB{
 }
 
 func autoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&Car{}, &Master{}, &Service{}, &Work{}, &PureWork{})
+	db.AutoMigrate(&Car{}, &Master{}, &Service{}, &Work{}, &PureWork{}, &User{})
 }
 
 
@@ -70,6 +70,11 @@ type Service struct {
 	Cost_Foreign float64 `gorm:"column:cost_foreign;"`
 }
 
+type User struct {
+	Id   int  				`gorm:"column:id; 		primary_key; 	not null;	AUTO_INCREMENT"`
+	Login string			`gorm:"column:user; 	type:varchar(250)"`
+	Password string			`gorm:"column:password; 	type:varchar(250)"`
+}
 
 func (s Service) String() string {
 	return fmt.Sprintf("Services<%d %s %g %g>\n", s.Id, s.Name, s.Cost_Our, s.Cost_Foreign)
@@ -85,4 +90,8 @@ func (m Master) String() string {
 
 func (c Car) String() string {
 	return fmt.Sprintf("Car <%d %s %s %s %d>\n", c.Id, c.Num, c.Color, c.Mark, c.Is_Foreign)
+}
+
+func (u User) String() string {
+	return fmt.Sprintf("User <%d %s %s>\n", u.Id, u.Login, u.Password)
 }
