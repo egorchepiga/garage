@@ -28,6 +28,25 @@ func ginServer() {
 		AllowCredentials: true,
 	}))
 
+	r.PUT("/auth", func(c *gin.Context) {
+		login := c.Query("login")
+		password := c.Query("password")
+		fmt.Println(login, password)
+		users := make([]User, 0)
+		db.Find(&users)
+		answers := make([]string, 0)
+		for user := range users {
+			if users[user].Login == login && users[user].Password == password{
+				answers = append(answers, "success")
+				c.JSON(200, gin.H{"answers": answers})
+				return
+			}
+		}
+		answers = append(answers, "failed")
+		c.JSON(200, gin.H{"answers": answers})
+		return
+	})
+
 	r.GET("/view/:num", func(c *gin.Context) {
 		num := c.Param("num")
 		switch num {
@@ -68,7 +87,7 @@ func ginServer() {
 			service := Service{Id: sId}
 			err := service.add10Cost(db)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				c.JSON(http.StatusBadRequest, gin.H{"error": err})
 				return
 			}
 			c.JSON(200, true)
@@ -79,17 +98,22 @@ func ginServer() {
 			break
 		case "1.3.1":
 			sum := sumCarsServicesTogether(db)
-			c.JSON(200, map[string]float64{"Sum": sum})
+			res := make([]map[string]float64,0)
+			res = append(res, map[string]float64{"Sum": sum})
+			c.JSON(200, res)
 			break
 		case "1.2.2":
 			type aCar struct {
-				Car Car
+				Id         int
+				Num        string
+				Color      string
+				Mark       string
 				Sum float64
 			}
 			aCars := make([]aCar, 0)
 			cars := everyCarLastYear(db)
 			for car := range cars {
-				aCars = append(aCars, aCar{Car: car, Sum: cars[car]})
+				aCars = append(aCars, aCar{car.Id,car.Num,car.Color,car.Mark, cars[car]})
 			}
 			c.JSON(200, aCars)
 			break
@@ -103,7 +127,9 @@ func ginServer() {
 			break
 		case "1.1.1":
 			our, foreign := sumCarsServices(db)
-			c.JSON(200, map[string]float64{"Our": our, "Foreign": foreign})
+			res := make([]map[string]float64,0)
+			res = append(res, map[string]float64{"Our": our, "Foreign": foreign})
+			c.JSON(200, res)
 			break
 		}
 	})

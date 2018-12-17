@@ -24,7 +24,7 @@ func sumCarsServices(db *gorm.DB) (our, foreign float64) {
 }
 
 // 1.1.2
-func worksLastMonth(db *gorm.DB) (works []Work) {
+func worksLastMonth(db *gorm.DB) (works []PureWork) {
 	db.Where("date_work > CURRENT_TIMESTAMP - interval '30 days'").
 		Where("date_work < CURRENT_TIMESTAMP").
 		Find(&works)
